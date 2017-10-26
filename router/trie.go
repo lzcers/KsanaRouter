@@ -1,21 +1,20 @@
 // 采用Trie算法来做路径匹配
 
-package ksana
+package router
 
 import (
-	"fmt"
 	"strings"
 )
 
 type trieNode struct {
-	path     string
-	handle   Handle
-	children []*trieNode
+	path      string
+	handleMap map[string]handle
+	children  []*trieNode
 }
 
-func (root *trieNode) addRoute(fullPath string, handle Handle) {
+func (root *trieNode) addRoute(method, fullPath string, handleFunc handle) {
 	node, path, ok := root.searchNode(fullPath)
-	if ok && len(path) == 0 && node.handle != nil {
+	if ok && len(path) == 0 && node.handleMap[method] != nil {
 		panic("该路由已注册")
 	}
 	for _, pathPart := range path {
@@ -28,12 +27,13 @@ func (root *trieNode) addRoute(fullPath string, handle Handle) {
 		node.children = append(node.children, newNode)
 		node = newNode
 	}
-	node.handle = handle
+	node.handleMap = make(map[string]handle)
+	node.handleMap[method] = handleFunc
 }
 
-func (root *trieNode) getHandle(fullPath string) Handle {
+func (root *trieNode) getHandle(method, fullPath string) handle {
 	if n, p, ok := root.searchNode(fullPath); ok && len(p) == 0 {
-		return n.handle
+		return n.handleMap[method]
 	}
 	return nil
 }
@@ -71,17 +71,4 @@ func (root *trieNode) searchNode(fullPath string) (*trieNode, []string, bool) {
 		arrPath = []string{"/"}
 	}
 	return DFS(root, arrPath)
-}
-
-// TraversalNode 用于遍所有路由节点
-func (root *trieNode) TraversalNode() {
-	var recursionDFS func(*trieNode)
-	recursionDFS = func(node *trieNode) {
-		fmt.Println("path: ", node.path)
-		fmt.Println("handle: ", node.handle)
-		for _, n := range node.children {
-			recursionDFS(n)
-		}
-	}
-	recursionDFS(root)
 }
