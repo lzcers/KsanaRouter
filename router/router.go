@@ -8,15 +8,22 @@ import (
 	"net/http"
 )
 
-// Handle 处理器
-type handle func(http.ResponseWriter, *http.Request)
+// Context 请求上下文
+type Context struct {
+	Req    *http.Request
+	Res    http.ResponseWriter
+	Params map[string]string
+}
+
+// Handler 处理器
+type Handler func(Context)
 
 // Router 路由器
 type Router struct {
 	trie *trieNode
 }
 
-func (r *Router) registerRoute(method, fullPath string, handleFunc handle) {
+func (r *Router) registerRoute(method, fullPath string, handler Handler) {
 	// 先判断请求路径是否合法
 	if fullPath[0] != '/' {
 		panic("path must begin with '/' in path" + fullPath)
@@ -24,32 +31,36 @@ func (r *Router) registerRoute(method, fullPath string, handleFunc handle) {
 	if r.trie == nil {
 		r.trie = new(trieNode)
 		r.trie.path = "/"
+		r.trie.nodeType = "string"
 	}
-	r.trie.addRoute(method, fullPath, handleFunc)
+	r.trie.addRoute(method, fullPath, handler)
 }
 
-func (r *Router) Get(fullPath string, handleFunc handle) {
-	r.registerRoute("GET", fullPath, handleFunc)
+// Get _
+func (r *Router) Get(fullPath string, handler Handler) {
+	r.registerRoute("GET", fullPath, handler)
 }
 
-func (r *Router) Post(fullPath string, handleFunc handle) {
-	r.registerRoute("POST", fullPath, handleFunc)
+// Post _
+func (r *Router) Post(fullPath string, handler Handler) {
+	r.registerRoute("POST", fullPath, handler)
 }
 
-func (r *Router) Put(fullPath string, handleFunc handle) {
-	r.registerRoute("PUT", fullPath, handleFunc)
+// Put _
+func (r *Router) Put(fullPath string, handler Handler) {
+	r.registerRoute("PUT", fullPath, handler)
 }
 
-func (r *Router) Delete(fullPath string, handleFunc handle) {
-	r.registerRoute("DELETE", fullPath, handleFunc)
+// Delete _
+func (r *Router) Delete(fullPath string, handler Handler) {
+	r.registerRoute("DELETE", fullPath, handler)
 }
 
 // TraversalNode 用于遍所有路由节点
 func (r *Router) TraversalNode() {
 	var recursionDFS func(*trieNode)
 	recursionDFS = func(node *trieNode) {
-		fmt.Println("path: ", node.path)
-		fmt.Println("handle: ", node.handleMap)
+		fmt.Println("path: " + node.path + " nodeType: " + node.nodeType)
 		for _, n := range node.children {
 			recursionDFS(n)
 		}
@@ -57,13 +68,15 @@ func (r *Router) TraversalNode() {
 	recursionDFS(r.trie)
 }
 
+// 实现 Handler 接口
 func (r *Router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 	method := req.Method
 	fmt.Println(method, path)
 	// todo 拿到请求路径和方法后塞给路由器处理
-	if handle := r.trie.getHandle(method, path); handle != nil {
-		handle(res, req)
+	if handler, params := r.trie.getHandler(method, path); handler != nil {
+		ctx := Context{Req: req, Res: res, Params: params}
+		handler(ctx)
 	} else {
 		fmt.Fprintf(res, "404")
 	}
