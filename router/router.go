@@ -4,19 +4,18 @@
 package router
 
 import (
+	"Ksana/controller"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 )
 
-// Context 请求上下文
-type Context struct {
-	Req    *http.Request
-	Res    http.ResponseWriter
-	Params map[string]string
-}
-
 // Handler 处理器
-type Handler func(Context)
+type Handler = controller.Handler
+
+// Context 请求上下文
+type Context = controller.Context
 
 // Router 路由器
 type Router struct {
@@ -76,6 +75,13 @@ func (r *Router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// todo 拿到请求路径和方法后塞给路由器处理
 	if handler, params := r.trie.getHandler(method, path); handler != nil {
 		ctx := Context{Req: req, Res: res, Params: params}
+		if method == "POST" {
+			body, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				log.Fatal("Parse Post Request Body: ", err)
+			}
+			ctx.Body = body
+		}
 		handler(ctx)
 	} else {
 		fmt.Fprintf(res, "404")

@@ -3,27 +3,27 @@
 package router
 
 import (
-	"fmt"
 	"strings"
 )
 
 type trieNode struct {
 	path       string
-	nodeType   string
+	nodeType   string // string || params
 	handlerMap map[string]Handler
 	children   []*trieNode
 }
 
 func (root *trieNode) addRoute(method, fullPath string, handler Handler) {
-	node, path, ok := root.searchNode(fullPath, "addRoute")
-	fmt.Println(node)
-	if ok && len(path) == 0 && node.handlerMap[method] != nil {
-		panic("该路由已注册")
+	node, path, ok := root.searchNode(fullPath)
+
+	// 每层仅允许存在一个 params 类型的节点，否则就会冲突
+	if (ok && len(path) == 0) && (node.handlerMap[method] != nil || node.nodeType == "params") {
+		panic("该路由已注册或存在冲突")
 	}
 	for _, pathPart := range path {
 		// 不注册空字符串节点
 		if pathPart == "" {
-			continue
+			panic("注册路径不能以 / 结尾")
 		}
 		newNode := new(trieNode)
 		newNode.path = pathPart
@@ -46,16 +46,13 @@ func (root *trieNode) parseNodeType(path string) string {
 
 func (root *trieNode) getHandler(method, fullPath string) (Handler, map[string]string) {
 	params := make(map[string]string)
-	if n, p, ok := root.searchNode(fullPath, "getHandler", params); ok && len(p) == 0 {
+	if n, p, ok := root.searchNode(fullPath, params); ok && len(p) == 0 {
 		return n.handlerMap[method], params
 	}
 	return nil, nil
 }
 
-func (root *trieNode) nodeMatch(seg string, node *trieNode, model string) (string, bool) {
-	if model == "addRoute" {
-		return "string", seg == node.path
-	}
+func (root *trieNode) nodeMatch(seg string, node *trieNode) (string, bool) {
 	switch node.nodeType {
 	case "string":
 		return "string", seg == node.path
@@ -67,15 +64,15 @@ func (root *trieNode) nodeMatch(seg string, node *trieNode, model string) (strin
 }
 
 // searchNode 用于搜索trie树, 返回最长匹路径和节点
-func (root *trieNode) searchNode(fullPath string, model string, other ...map[string]string) (*trieNode, []string, bool) {
+func (root *trieNode) searchNode(fullPath string, other ...map[string]string) (*trieNode, []string, bool) {
+
 	var DFS func(*trieNode, []string) (*trieNode, []string, bool)
 	DFS = func(node *trieNode, path []string) (*trieNode, []string, bool) {
-		seg := path[0]
-		var rest []string
+		seg, rest := path[0], make([]string, 0)
 		if len(path) > 1 {
 			rest = path[1:]
 		}
-		if nodeType, ok := root.nodeMatch(seg, node, model); ok {
+		if nodeType, ok := root.nodeMatch(seg, node); ok {
 			if len(other) > 0 && nodeType == "params" {
 				params := other[0]
 				params[node.path[1:]] = seg
