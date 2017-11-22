@@ -25,7 +25,7 @@ type Router struct {
 func (r *Router) registerRoute(method, fullPath string, handler Handler) {
 	// 先判断请求路径是否合法
 	if fullPath[0] != '/' {
-		panic("path must begin with '/' in path" + fullPath)
+		panic("path must begin with '/' in path " + fullPath)
 	}
 	if r.trie == nil {
 		r.trie = new(trieNode)
@@ -82,6 +82,7 @@ func (r *Router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			}
 			ctx.Body = body
 		}
+		ctx.Res.Header().Set("Content-Type", "application/json; charset=utf-8")
 		handler(ctx)
 	} else {
 		fmt.Fprintf(res, "404")

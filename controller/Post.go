@@ -9,7 +9,8 @@ import (
 func AddPost(ctx Context) {
 	var post models.Post
 	json.Unmarshal(ctx.Body, &post)
-	models.AddPost(post)
+	pID := models.AddPost(post)
+	fmt.Fprintf(ctx.Res, pID)
 }
 
 func GetPost(ctx Context) {
@@ -27,5 +28,21 @@ func GetTags(ctx Context) {
 	if err != nil {
 		// 我他妈也不知道该做啥
 	}
-	fmt.Fprint(ctx.Res, string(tagsJSON))
+	fmt.Fprintf(ctx.Res, string(tagsJSON))
+}
+
+func GetPostsByTag(ctx Context) {
+	tag := ctx.Params["tag"]
+	postsJSON, err := json.Marshal(models.GetPostsByTag(tag))
+	if err != nil {
+
+	}
+	fmt.Fprintf(ctx.Res, string(postsJSON))
+}
+
+func UpdatePost(ctx Context) {
+	var post models.Post
+	pID := ctx.Params["pID"]
+	json.Unmarshal(ctx.Body, &post)
+	models.UpdatePost(pID, post)
 }

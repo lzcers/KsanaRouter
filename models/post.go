@@ -10,8 +10,8 @@ import (
 
 // Post 文章
 type Post struct {
-	ID          bson.ObjectId `json:"-" bson:"_id"`
-	PostName    string        `json:"PostName" bson:"PostName"`
+	ID          bson.ObjectId `bson:"_id"`
+	Title       string        `json:"Title" bson:"Title"`
 	Tags        []string      `json:"Tags" bson:"Tags"`
 	Content     string        `json:"Content" bson:"Content"`
 	PublishDate string        `json:"PublishDate" bson:"PublishDate"`
@@ -19,9 +19,10 @@ type Post struct {
 }
 
 // AddPost 写入一篇文章至数据库
-func AddPost(p Post) {
+func AddPost(p Post) string {
 	p.ID = bson.NewObjectId()
 	DB.C("posts").Insert(&p)
+	return p.ID.Hex()
 }
 
 // GetPost 根据ID获取文章，ID为空则获取所有文章
@@ -38,6 +39,36 @@ func GetPost(pID string) []Post {
 	}
 	if err != nil {
 		// 我他妈也不知道该做啥
+	}
+	return result
+}
+
+// UpdatePost 更新文章
+func UpdatePost(pID string, p Post) {
+	if pID != "" {
+		newPost := bson.M{"$set": bson.M{
+			"Title":      p.Title,
+			"Tags":       p.Tags,
+			"Content":    p.Content,
+			"LastUpdate": p.LastUpdate,
+		}}
+		err := DB.C("posts").UpdateId(bson.ObjectIdHex(pID), newPost)
+		if err != nil {
+
+		}
+	}
+}
+
+// GetPostsByTag 获取 tag 标签的文章集合
+func GetPostsByTag(tag string) []Post {
+	var (
+		result []Post
+		err    error
+	)
+	if tag != "" {
+		err = DB.C("posts").Find(bson.M{"Tags": tag}).All(&result)
+	}
+	if err != nil {
 	}
 	return result
 }

@@ -16,9 +16,13 @@ func main() {
 	})
 	app.Post("/post/add", controller.AddPost)
 
+	app.Post("/post/update/:pID", controller.UpdatePost)
+
 	app.Get("/post/get/:pID", controller.GetPost)
 
 	app.Get("/tags/get", controller.GetTags)
+
+	app.Get("/post/getByTag/:tag", controller.GetPostsByTag)
 
 	if err := http.ListenAndServe(":9090", app); err != nil {
 		log.Fatal("ListenAndServe: ", err)
