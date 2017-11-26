@@ -10,10 +10,14 @@ import (
 
 func main() {
 	app := new(router.Router)
-
 	app.Get("/", func(p controller.Context) {
 		fmt.Fprintf(p.Res, "Hello World")
 	})
+
+	app.Post("/login", controller.Login)
+
+	app.Get("/authorizationCheck", controller.AuthorizationCheck)
+
 	app.Post("/post/add", controller.AddPost)
 
 	app.Post("/post/update/:pID", controller.UpdatePost)
