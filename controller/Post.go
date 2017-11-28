@@ -7,10 +7,15 @@ import (
 )
 
 func AddPost(ctx Context) {
-	var post models.Post
-	json.Unmarshal(ctx.Body, &post)
-	pID := models.AddPost(post)
-	fmt.Fprintf(ctx.Res, pID)
+	if authorCheck(ctx) {
+		var post models.Post
+		json.Unmarshal(ctx.Body, &post)
+		pID := models.AddPost(post)
+		fmt.Fprintf(ctx.Res, pID)
+	} else {
+		ctx.Res.WriteHeader(401)
+		fmt.Fprintf(ctx.Res, `{"result": false}`)
+	}
 }
 
 func GetPost(ctx Context) {
@@ -41,8 +46,13 @@ func GetPostsByTag(ctx Context) {
 }
 
 func UpdatePost(ctx Context) {
-	var post models.Post
-	pID := ctx.Params["pID"]
-	json.Unmarshal(ctx.Body, &post)
-	models.UpdatePost(pID, post)
+	if authorCheck(ctx) {
+		var post models.Post
+		pID := ctx.Params["pID"]
+		json.Unmarshal(ctx.Body, &post)
+		models.UpdatePost(pID, post)
+	} else {
+		ctx.Res.WriteHeader(401)
+		fmt.Fprintf(ctx.Res, `{"result": false}`)
+	}
 }

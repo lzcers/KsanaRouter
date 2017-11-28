@@ -40,7 +40,7 @@ func Login(ctx Context) {
 	}
 }
 
-// AuthorizationCheck 权限校验
+// AuthorizationCheck 前端权限校验
 func AuthorizationCheck(ctx Context) {
 	sess := session.GlobalSessions.SessionStart(ctx.Res, ctx.Req)
 	sessUserName := sess.Get("username")
@@ -50,5 +50,17 @@ func AuthorizationCheck(ctx Context) {
 		return
 	}
 	// 其他一律提示未授权
+	// ctx.Res.WriteHeader(401)
 	fmt.Fprintf(ctx.Res, `{"result": false}`)
+}
+
+// AuthorizationCheck 后端权限校验
+func authorCheck(ctx Context) bool {
+	sess := session.GlobalSessions.SessionStart(ctx.Res, ctx.Req)
+	sessUserName := sess.Get("username")
+
+	if sessUserName != nil && sessUserName.(string) == "admin" {
+		return true
+	}
+	return false
 }
