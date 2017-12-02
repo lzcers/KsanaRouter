@@ -54,13 +54,16 @@ func AuthorizationCheck(ctx Context) {
 	fmt.Fprintf(ctx.Res, `{"result": false}`)
 }
 
-// AuthorizationCheck 后端权限校验
-func authorCheck(ctx Context) bool {
-	sess := session.GlobalSessions.SessionStart(ctx.Res, ctx.Req)
-	sessUserName := sess.Get("username")
-
-	if sessUserName != nil && sessUserName.(string) == "admin" {
-		return true
+// AuthorCheck 后端权限校验装饰器
+func AuthorCheck(f HandlerFunc) HandlerFunc {
+	return func(ctx Context) {
+		sess := session.GlobalSessions.SessionStart(ctx.Res, ctx.Req)
+		sessUserName := sess.Get("username")
+		if sessUserName != nil && sessUserName.(string) == "admin" {
+			f(ctx)
+		} else {
+			ctx.Res.WriteHeader(401)
+			fmt.Fprintf(ctx.Res, `{"result": false}`)
+		}
 	}
-	return false
 }

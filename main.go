@@ -8,19 +8,23 @@ import (
 	"net/http"
 )
 
+// Handler 带装饰的处理器
+var Handler = controller.Handler
+
 func main() {
 	app := new(router.Router)
-	app.Get("/", func(p controller.Context) {
-		fmt.Fprintf(p.Res, "Hello World")
+
+	app.Get("/", func(ctx controller.Context) {
+		fmt.Fprintf(ctx.Res, "Hello World")
 	})
 
 	app.Post("/login", controller.Login)
 
 	app.Get("/authorizationCheck", controller.AuthorizationCheck)
 
-	app.Post("/post/add", controller.AddPost)
+	app.Post("/post/add", Handler(controller.AddPost, controller.AuthorCheck))
 
-	app.Post("/post/update/:pID", controller.UpdatePost)
+	app.Post("/post/update/:pID", Handler(controller.UpdatePost, controller.AuthorCheck))
 
 	app.Get("/post/get/:pID", controller.GetPost)
 

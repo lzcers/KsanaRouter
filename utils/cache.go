@@ -1,4 +1,7 @@
-package cache
+/*
+	并发非堵塞缓存
+*/
+package utils
 
 type Func func(string) (interface{}, error)
 
@@ -19,14 +22,16 @@ type request struct {
 	response chan<- result
 }
 
-func New(f Func) *Memo {
+func NewMemoryCache(f Func) *Memo {
 	memo := &Memo{requests: make(chan request)}
+	// 启动一个 goroutines 服务
 	go memo.server(f)
 	return memo
 }
 
 func (m *Memo) Get(key string) (interface{}, error) {
 	response := make(chan result)
+	// 使用通信来共享数据， 不要使用共享数据来通信
 	m.requests <- request{key, response}
 	res := <-response
 	return res.value, res.err
@@ -34,6 +39,7 @@ func (m *Memo) Get(key string) (interface{}, error) {
 
 func (m *Memo) Close() { close(memo.requests) }
 
+//
 func (m *Memo) server(f Func) {
 	cache := make(map[string]*entry)
 	for req := range m.requests {

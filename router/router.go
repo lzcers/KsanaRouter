@@ -12,7 +12,7 @@ import (
 )
 
 // Handler 处理器
-type Handler = controller.Handler
+type Handler = controller.HandlerFunc
 
 // Context 请求上下文
 type Context = controller.Context
