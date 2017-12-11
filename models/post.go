@@ -1,8 +1,6 @@
 package models
 
 import (
-	"fmt"
-
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -16,6 +14,7 @@ type Post struct {
 	Content     string        `json:"Content" bson:"Content"`
 	PublishDate string        `json:"PublishDate" bson:"PublishDate"`
 	LastUpdate  string        `json:"LastUpdate" bson:"LastUpdate"`
+	Published   bool          `json:"Published,omitempty" bson:"Published,omitempty"`
 }
 
 // AddPost 写入一篇文章至数据库
@@ -26,16 +25,24 @@ func AddPost(p Post) string {
 }
 
 // GetPost 根据ID获取文章，ID为空则获取所有文章
-func GetPost(pID string) []Post {
+func GetPost(pID string, role string) []Post {
 	var (
 		result []Post
 		err    error
 	)
-	if pID != "" {
-		fmt.Println(pID)
-		err = DB.C("posts").FindId(bson.ObjectIdHex(pID)).All(&result)
+	// 管理员的数据范围是所有，非管理员数据范围有限
+	if role == "admin" {
+		if pID != "" {
+			err = DB.C("posts").FindId(bson.ObjectIdHex(pID)).All(&result)
+		} else {
+			err = DB.C("posts").Find(nil).All(&result)
+		}
 	} else {
-		err = DB.C("posts").Find(nil).All(&result)
+		if pID != "" {
+			err = DB.C("posts").Find(bson.M{"_id": bson.ObjectIdHex(pID), "Published": bson.M{"$ne": false}}).All(&result)
+		} else {
+			err = DB.C("posts").Find(bson.M{"Published": bson.M{"$ne": false}}).All(&result)
+		}
 	}
 	if err != nil {
 		// 我他妈也不知道该做啥
@@ -51,6 +58,7 @@ func UpdatePost(pID string, p Post) {
 			"Tags":       p.Tags,
 			"Content":    p.Content,
 			"LastUpdate": p.LastUpdate,
+			"Published":  p.Published,
 		}}
 		err := DB.C("posts").UpdateId(bson.ObjectIdHex(pID), newPost)
 		if err != nil {

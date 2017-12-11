@@ -2,6 +2,7 @@ package controller
 
 import (
 	"Ksana/models"
+	"Ksana/session"
 	"encoding/json"
 	"fmt"
 )
@@ -15,7 +16,15 @@ func AddPost(ctx Context) {
 
 func GetPost(ctx Context) {
 	pID := ctx.Params["pID"]
-	posts := models.GetPost(pID)
+	// 验证身份，非管理员只能读取公开的文章
+	sess := session.GlobalSessions.SessionStart(ctx.Res, ctx.Req)
+	sessUserName := sess.Get("username")
+	var posts []models.Post
+	if sessUserName != nil && sessUserName.(string) == "admin" {
+		posts = models.GetPost(pID, "admin")
+	} else {
+		posts = models.GetPost(pID, "user")
+	}
 	postsJSON, err := json.Marshal(posts)
 	if err != nil {
 		// 我他妈也不知道该做啥
