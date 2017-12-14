@@ -11,7 +11,7 @@ func AddPost(ctx Context) {
 	var post models.Post
 	json.Unmarshal(ctx.Body, &post)
 	pID := models.AddPost(post)
-	fmt.Fprintf(ctx.Res, pID)
+	fmt.Fprintf(ctx.Res, "%s", pID)
 }
 
 func GetPost(ctx Context) {
@@ -29,7 +29,7 @@ func GetPost(ctx Context) {
 	if err != nil {
 		// 我他妈也不知道该做啥
 	}
-	fmt.Fprintf(ctx.Res, string(postsJSON))
+	fmt.Fprintf(ctx.Res, "%s", string(postsJSON))
 }
 
 func GetTags(ctx Context) {
@@ -37,7 +37,7 @@ func GetTags(ctx Context) {
 	if err != nil {
 		// 我他妈也不知道该做啥
 	}
-	fmt.Fprintf(ctx.Res, string(tagsJSON))
+	fmt.Fprintf(ctx.Res, "%s", string(tagsJSON))
 }
 
 func GetPostsByTag(ctx Context) {
@@ -46,7 +46,7 @@ func GetPostsByTag(ctx Context) {
 	if err != nil {
 
 	}
-	fmt.Fprintf(ctx.Res, string(postsJSON))
+	fmt.Fprintf(ctx.Res, "%s", string(postsJSON))
 }
 
 func UpdatePost(ctx Context) {
